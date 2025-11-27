@@ -2,10 +2,9 @@ import UserModel from "../../../database/model/user/AppUserModel";
 import { generateToken, verifyPassword } from "../helper";
 import { debug } from "../../../common/debug";
 import jwt from "jsonwebtoken";
-import { Request, response, Response } from "express";
+import { Request, } from "express";
 import { getAppUser } from "../../../common/function/user";
 import { UserType } from "../../../types/user";
-import { response200 } from "../../../common/response";
 
 const secretKey: string | undefined = process.env.JWT_SECRET ?? "sample";
 
@@ -21,7 +20,6 @@ class AuthService {
         email: email,
         // status: COMMON_STATUS_ACTIVE,
       }).select("id name email password");
-
 
       if (user) {
         //ip checking id need
