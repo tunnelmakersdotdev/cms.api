@@ -2,7 +2,7 @@ import UserModel from "../../../database/model/user/AppUserModel";
 import { generateToken, verifyPassword } from "../helper";
 import { debug } from "../../../common/debug";
 import jwt from "jsonwebtoken";
-import { Request, } from "express";
+import { Request } from "express";
 import { getAppUser } from "../../../common/function/user";
 import { UserType } from "../../../types/user";
 
@@ -19,8 +19,7 @@ class AuthService {
       const user = await UserModel.findOne({
         email: email,
         // status: COMMON_STATUS_ACTIVE,
-      }).select("id name email password");
-
+      }).select("id name email password profileImage");
       if (user) {
         //ip checking id need
 
@@ -35,6 +34,54 @@ class AuthService {
       debug(error);
       throw error;
     }
+  }
+
+  async googleSignUp(body: {
+    email: string;
+    name: string;
+    picture: string;
+    googleId: string;
+  }) {
+    const { googleId } = body;
+
+    const existUser = await UserModel.exists({
+      googleId: googleId,
+    });
+
+    if (existUser) {
+      return "User already exists with this Google account";
+    }
+
+    const newUser = new UserModel({
+      name: body.name,
+      email: body.email,
+      googleId: body.googleId,
+      profileImage: body.picture,
+    });
+
+    const savedUser = await newUser.save();
+
+    if (savedUser) {
+      return this.generateAndResponse({ user: newUser as UserType });
+    }
+    return "Failed to create user with Google account";
+  }
+
+  async googleLogin(body: {
+    email: string;
+    name: string;
+    picture: string;
+    googleId: string;
+  }) {
+    const { googleId } = body;
+    const user = await UserModel.findOne({
+      googleId,
+    }).select("id name email googleId profileImage");
+
+    if (user) {
+      return this.generateAndResponse({ user: user as UserType });
+    }
+    return "Failed to login with Google account";
   }
 
   async authVerify({ req }: { req: Request }) {
@@ -74,14 +121,13 @@ class AuthService {
       user: {
         id: user.id,
         role: ["admin"],
-        data: {
-          displayName: user.name,
-          photoURL: "#",
-          email: user.email,
-          settings: {
-            layout: {},
-            theme: {},
-          },
+        displayName: user.name,
+        photoURL: user?.profileImage ?? "#",
+        email: user.email,
+        loginRedirectUrl: "/admin/user",
+        settings: {
+          layout: {},
+          theme: {},
         },
       },
     };

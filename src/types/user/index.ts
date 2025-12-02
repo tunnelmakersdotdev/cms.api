@@ -6,11 +6,11 @@ export type UserType = {
   email: string;
   role: string;
   group: Types.ObjectId;
+  googleId?: string;
+  profileImage?: string;
   password: string;
   media: any;
 };
-
-
 
 export type AuthJwtUserType = {
   id: string;

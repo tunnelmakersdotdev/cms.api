@@ -1,4 +1,3 @@
-import e from "express";
 import express from "express";
 import userRoutes from "../../modules/user/routes";
 import clinicRoutes from "../../modules/clinic/routes";

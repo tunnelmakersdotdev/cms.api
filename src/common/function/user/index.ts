@@ -6,7 +6,7 @@ export const getAppUser = async (
   userId: string
 ): Promise<Partial<UserType>> => {
   const user = await UserModel.findById(userId)
-    .select(extractSelect("id name email"))
+    .select(extractSelect("id name email profileImage"))
     .lean();
   return user as Partial<UserType>;
 };

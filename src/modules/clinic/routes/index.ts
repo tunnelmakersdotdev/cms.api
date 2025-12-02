@@ -13,7 +13,7 @@ import {
 const clinicRoutes = express.Router();
 
 clinicRoutes.get("/", getAllClinics);
-clinicRoutes.post("/add/:id", createOrUpdateClinic);
+clinicRoutes.post(["/add/", "/add/:id"], createOrUpdateClinic);
 clinicRoutes.get("/get/:id", getClinicById);
 
 // userRoutes.post("/add", createOrUpdateUser);

@@ -80,8 +80,8 @@ class UserServices {
     const model = await paginationQueryBuilder({
       _model: UserModel,
       query,
-      select: "",
-      likeSearch: "name",
+      select: extractSelect("name email profileImage"),
+      likeSearch: "name email",
       where: filter,
       mediaLoop: true,
     });

@@ -38,7 +38,8 @@ export const getClinicById: RequestHandler = async (req, res) => {
 
 export const createOrUpdateClinic: RequestHandler = async (req, res) => {
   const { id } = req.params;
-  const { name, address, phones, emails, website } = req.body;
+  const { name, address, phones, emails, website, username, password } =
+    req.body;
 
   try {
     const data = await clinicService.createOrUpdateClinic({

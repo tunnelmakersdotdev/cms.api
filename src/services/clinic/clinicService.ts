@@ -1,6 +1,6 @@
 import { isValidObjectId } from "mongoose";
 import ClinicModel from "../../database/model/clinic/ClinicModel";
-import { paginationQueryBuilder } from "../../mongoose";
+import { extractSelect, paginationQueryBuilder } from "../../mongoose";
 
 class ClinicService {
   async getAllClinics({ query, filter }: { query: any; filter: any }) {
@@ -8,7 +8,7 @@ class ClinicService {
       const model = await paginationQueryBuilder({
         _model: ClinicModel,
         query,
-        select: "",
+        select: extractSelect("name address"),
         likeSearch: "name",
         where: filter,
       });
@@ -39,7 +39,9 @@ class ClinicService {
   }
   async getClinicById(id: string) {
     try {
-      const oneModel = await ClinicModel.findById(id);
+      const oneModel = await ClinicModel.findById(id).select(
+        extractSelect("name address phones emails website ")
+      );
       return oneModel ? oneModel.toObject() : null;
     } catch (error) {
       throw error;

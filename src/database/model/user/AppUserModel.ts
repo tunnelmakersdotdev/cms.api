@@ -5,7 +5,14 @@ import { UserType } from "../../../types/user";
 
 export type ModelType = Pick<
   UserType,
-  "name" | "email" | "password" | "media" | "role" | "group"
+  | "name"
+  | "email"
+  | "password"
+  | "media"
+  | "role"
+  | "group"
+  | "profileImage"
+  | "googleId"
 > & {
   x__: string;
 };
@@ -25,10 +32,12 @@ const userSchema: mongoose.Schema<ModelType> = new mongoose.Schema(
   {
     name: { type: String },
     email: { type: String },
-    password: { type: String, required: true },
+    password: { type: String },
     role: { type: String, default: "user" },
     group: { type: Schema.Types.ObjectId, ref: COLLECTION_GROUP },
-    media: { type: [mediaSchema] },
+    googleId: { type: String, unique: true, sparse: true },
+    profileImage: { type: String },
+    // media: { type: [mediaSchema] },
     x__: { type: String, select: false },
   },
   {
