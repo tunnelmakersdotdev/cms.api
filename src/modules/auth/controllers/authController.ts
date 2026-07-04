@@ -7,8 +7,55 @@ import {
 import AuthService from "../services/authService";
 import { debug } from "../../../common/debug";
 import googleService from "../../../services/google/googleService";
+import clinicService from "../../../services/clinic/clinicService";
+import { emitClinicChanged } from "../../../socket";
 
 const authService = new AuthService();
+
+export const registerClinic: RequestHandler = async (req, res) => {
+  const {
+    clinicName,
+    address,
+    plan,
+    maxStaff,
+    maxDoctors,
+    name,
+    email,
+    password,
+  } = req.body;
+  try {
+    if (!clinicName || !name || !email || !password) {
+      response422({
+        res,
+        message: "Clinic name, your name, email and password are required",
+      });
+      return;
+    }
+    const result = await clinicService.registerClinic({
+      clinic: { name: clinicName, address, plan, maxStaff, maxDoctors },
+      owner: { name, email, password },
+    });
+    if (!result.ok) {
+      response422({
+        res,
+        message: "An account with this email already exists",
+      });
+      return;
+    }
+    emitClinicChanged({ id: result.clinicId, action: "created" });
+    response200({
+      res,
+      data: { clinicId: result.clinicId, status: "pending" },
+      message:
+        "Registration submitted. Your clinic is pending admin approval — you'll be able to sign in once approved.",
+    });
+    return;
+  } catch (error) {
+    debug(error);
+    response500({ res, data: error });
+    return;
+  }
+};
 
 export const login: RequestHandler = async (req, res) => {
   const { email, password } = req.body;

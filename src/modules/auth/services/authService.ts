@@ -19,7 +19,7 @@ class AuthService {
       const user = await UserModel.findOne({
         email: email,
         // status: COMMON_STATUS_ACTIVE,
-      }).select("id name email password profileImage");
+      }).select("id name email password profileImage role clinicId");
       if (user) {
         //ip checking id need
 
@@ -36,35 +36,54 @@ class AuthService {
     }
   }
 
+  /**
+   * Resolve a Google identity to an app account, linking on first use:
+   *  1. already linked (by googleId) → return it
+   *  2. otherwise match an EXISTING account by email and attach the googleId,
+   *     so any user type (staff, doctor, clinic-admin, customer, admin) created
+   *     with their Google email becomes Google-enabled on first sign-in.
+   * Returns null if no account matches (caller decides whether to create one).
+   */
+  private async findAndLinkGoogleUser(body: {
+    email: string;
+    name: string;
+    picture: string;
+    googleId: string;
+  }) {
+    const { email, googleId, picture } = body;
+
+    let user = await UserModel.findOne({ googleId });
+    if (!user && email) {
+      user = await UserModel.findOne({ email });
+      if (user) {
+        user.googleId = googleId;
+        if (!user.profileImage && picture) user.profileImage = picture;
+        await user.save();
+      }
+    }
+    return user;
+  }
+
   async googleSignUp(body: {
     email: string;
     name: string;
     picture: string;
     googleId: string;
   }) {
-    const { googleId } = body;
-
-    const existUser = await UserModel.exists({
-      googleId: googleId,
-    });
-
-    if (existUser) {
-      return "User already exists with this Google account";
+    // Link an existing account if there is one; otherwise self-register as a
+    // customer (the public Google sign-up path).
+    let user = await this.findAndLinkGoogleUser(body);
+    if (!user) {
+      user = new UserModel({
+        name: body.name,
+        email: body.email,
+        googleId: body.googleId,
+        profileImage: body.picture,
+        role: "customer",
+      });
+      await user.save();
     }
-
-    const newUser = new UserModel({
-      name: body.name,
-      email: body.email,
-      googleId: body.googleId,
-      profileImage: body.picture,
-    });
-
-    const savedUser = await newUser.save();
-
-    if (savedUser) {
-      return this.generateAndResponse({ user: newUser as UserType });
-    }
-    return "Failed to create user with Google account";
+    return this.generateAndResponse({ user: user as UserType });
   }
 
   async googleLogin(body: {
@@ -73,15 +92,11 @@ class AuthService {
     picture: string;
     googleId: string;
   }) {
-    const { googleId } = body;
-    const user = await UserModel.findOne({
-      googleId,
-    }).select("id name email googleId profileImage");
-
+    const user = await this.findAndLinkGoogleUser(body);
     if (user) {
       return this.generateAndResponse({ user: user as UserType });
     }
-    return "Failed to login with Google account";
+    return "No account found for this Google email. Ask your clinic to add you.";
   }
 
   async authVerify({ req }: { req: Request }) {
@@ -114,17 +129,22 @@ class AuthService {
       name: user?.name,
     });
 
+    const role = user.role ?? "customer";
+    // Customers land on their account page; everyone else on the dashboard.
+    const loginRedirectUrl = role === "customer" ? "/account" : "/dashboard";
+
     return {
       access_token: token,
       username: user.email,
       email: user.email,
       user: {
         id: user.id,
-        role: ["admin"],
+        role: [role],
+        clinicId: user.clinicId?.toString() ?? null,
         displayName: user.name,
         photoURL: user?.profileImage ?? "#",
         email: user.email,
-        loginRedirectUrl: "/admin/user",
+        loginRedirectUrl,
         settings: {
           layout: {},
           theme: {},

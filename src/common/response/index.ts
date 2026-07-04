@@ -69,10 +69,10 @@ export const response404 = ({
 export const response403 = ({
   res,
   status = false,
-  message = "403 Authentication error",
+  message = "You don't have permission to perform this action",
   data = null,
 }: responseType) => {
-  return res.status(404).json({
+  return res.status(403).json({
     status,
     data,
     message,

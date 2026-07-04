@@ -1,7 +1,7 @@
 import mongoose, { Schema } from "mongoose";
-import { COLLECTION_GROUP, COLLECTION_USER } from "..";
+import { COLLECTION_CLINIC, COLLECTION_GROUP, COLLECTION_USER } from "..";
 import { hashPassword } from "../../../modules/auth/helper";
-import { UserType } from "../../../types/user";
+import { USER_ROLES, UserType } from "../../../types/user";
 
 export type ModelType = Pick<
   UserType,
@@ -13,6 +13,11 @@ export type ModelType = Pick<
   | "group"
   | "profileImage"
   | "googleId"
+  | "clinicId"
+  | "specialization"
+  | "consultationFee"
+  | "isDefault"
+  | "approvalStatus"
 > & {
   x__: string;
 };
@@ -31,12 +36,26 @@ const mediaSchema = new mongoose.Schema(
 const userSchema: mongoose.Schema<ModelType> = new mongoose.Schema(
   {
     name: { type: String },
-    email: { type: String },
+    // one account per email — a user belongs to exactly one clinic
+    email: { type: String, unique: true, sparse: true },
     password: { type: String },
-    role: { type: String, default: "user" },
+    role: { type: String, enum: USER_ROLES, default: "customer" },
     group: { type: Schema.Types.ObjectId, ref: COLLECTION_GROUP },
     googleId: { type: String, unique: true, sparse: true },
     profileImage: { type: String },
+    // clinic association — required in practice for clinic-admin / doctor / staff
+    clinicId: { type: Schema.Types.ObjectId, ref: COLLECTION_CLINIC },
+    // doctor-only profile fields
+    specialization: { type: String },
+    consultationFee: { type: Number },
+    isDefault: { type: Boolean, default: false },
+    // doctor approval workflow (default approved so non-doctor users & direct
+    // system-admin creations are immediately active)
+    approvalStatus: {
+      type: String,
+      enum: ["pending", "approved", "rejected"],
+      default: "approved",
+    },
     // media: { type: [mediaSchema] },
     x__: { type: String, select: false },
   },

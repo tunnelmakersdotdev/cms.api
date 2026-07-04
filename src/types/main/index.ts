@@ -1,7 +1,11 @@
 import { Request } from "express";
-import { AuthJwtUserType } from "../user";
+import { AuthJwtUserType, UserType } from "../user";
 
-export type AuthenticatedRequest = Request & { user?: AuthJwtUserType };
+// authenticateToken sets req.user to the full app user (incl. role + clinicId),
+// not just the JWT payload — type it accordingly for tenancy scoping.
+export type AuthenticatedRequest = Request & {
+  user?: AuthJwtUserType & Partial<UserType>;
+};
 export type UserStampType = {
   createdBy?: string;
   updatedBy?: string;

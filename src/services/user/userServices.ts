@@ -92,7 +92,7 @@ class UserServices {
   async getUserById(id: string) {
     try {
       const oneModel = await UserModel.findById(id).select(
-        extractSelect("name email media")
+        extractSelect("name email media role clinicId")
       );
       if (oneModel) {
         let newData: any = oneModel.toJSON();

@@ -9,6 +9,8 @@ export type AddressType = {
 };
 
 
+export type PlanType = "base" | "pro" | "enterprise" | "custom";
+
 export type ClinicType = {
   id: string;
   name: string;
@@ -17,6 +19,14 @@ export type ClinicType = {
   phones: string[];
   emails: string[];
   website?: string;
+  // subscription
+  plan: PlanType;
+  maxStaff: number;
+  maxDoctors: number;
+  // self-registration approval: clinic owner signs up → system-admin approves
+  approvalStatus?: "pending" | "approved" | "rejected";
+  // unique code used to open this clinic's public token-display board
+  displayId?: string;
 };
 
 // {
